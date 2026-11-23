@@ -13,9 +13,11 @@ on:
 permissions:
   contents: read
 
+# PR 上取消被新提交覆盖的旧运行，省时间；main 上每次 push 都跑完。
+# 否则连续合并会让前几次运行停在 cancelled，提交列表里显示红叉。
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: "${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:
