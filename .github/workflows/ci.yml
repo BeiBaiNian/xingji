@@ -1,0 +1,66 @@
+name: CI
+
+# 星记的静态分析与回归测试。版本按 docs/BUILD.md 固定为 Flutter 3.47.8（Dart 3.13.7）。
+# 测试跑在 Windows 上：test/core_test.dart 有 Platform.isWindows 分支，
+# 且 sodium / sqlite3 的 native assets 需要 MSVC 与 CMake。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: flutter analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.8
+          channel: stable
+          cache: true
+
+      - name: pub get
+        run: flutter pub get
+
+      - name: analyze
+        run: flutter analyze --no-pub
+
+  test:
+    name: flutter test
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.8
+          channel: stable
+          cache: true
+
+      - name: pub cache
+        uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/Pub/Cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
+      - name: pub get
+        run: flutter pub get
+
+      # --concurrency=1 是项目要求：并发实例会争用测试用的 SQLite 资料库。
+      - name: test
+        run: flutter test --no-pub --concurrency=1 --reporter=expanded
