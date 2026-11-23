@@ -1,0 +1,14 @@
+# The Gradle wrapper is committed on purpose: a fresh clone can run
+# gradlew.bat directly and the wrapper version stays pinned by
+# gradle/wrapper/gradle-wrapper.properties.
+/.gradle
+/captures/
+/local.properties
+GeneratedPluginRegistrant.java
+.cxx/
+
+# Remember to never publicly share your keystore.
+# See https://flutter.dev/to/reference-keystore
+key.properties
+**/*.keystore
+**/*.jks
